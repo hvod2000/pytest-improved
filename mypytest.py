@@ -63,14 +63,19 @@ def main(argv):
         modules |= load_test_modules(target)
     testsets = {name: load_tests(m) for name, m in modules.items()}
     total_tests, current_test = sum(map(len, testsets.values())), 0
+    fails = {}
     for module_path, testset in testsets.items():
         for name, test in testset.items():
             current_test += 1
             print(str(module_path) + "::" + name, end=" ")
-            print_status(run_test(test))
+            success = run_test(test)
+            if not success:
+                fails[str(module_path) + "::" + name] = 0
+            print_status(success)
             term_width = os.get_terminal_size().columns
-            percets_runned = round(current_test / total_tests * 100)
-            print(f"\x1b[{term_width-6}G[{percets_runned:3}%]")
+            percents = str(round(current_test / total_tests * 100)) + "%"
+            color = "red" if fails else "green"
+            print(colored(f"\x1b[{term_width-6}G[{percents:>4}]", color))
 
 
 main(sys.argv)

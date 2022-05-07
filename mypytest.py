@@ -53,9 +53,9 @@ def load_tests(module):
 def run_test(test):
     try:
         test()
-        return True
+        return (True, None)
     except Exception as e:
-        return False
+        return (False, e)
 
 
 def print_status(status):
@@ -76,9 +76,9 @@ def main(argv):
         for name, test in testset.items():
             current_test += 1
             print(str(module_path) + "::" + name, end=" ")
-            success = run_test(test)
+            success, error = run_test(test)
             if not success:
-                fails[str(module_path) + "::" + name] = 0
+                fails[str(module_path) + "::" + name] = error
             print_status(success)
             term_width = os.get_terminal_size().columns
             percents = str(round(current_test / total_tests * 100)) + "%"
@@ -86,8 +86,8 @@ def main(argv):
             print(colored(f"\x1b[{term_width-6}G[{percents:>4}]", color))
     print()
     print_header("short test summary info")
-    for path, fail in fails.items():
-        print("FAILED", path)
+    for path, error in fails.items():
+        print("FAILED", path, error.__class__.__name__)
     failed = len(fails)
     passed = total_tests - len(fails)
     dt = time.time() - t0

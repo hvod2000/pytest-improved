@@ -3,6 +3,8 @@ import importlib
 import contextlib
 from pathlib import Path
 
+IGNORED_DIRECTORIES = {"__pycache__"}
+
 
 def load_test_module(path):
     if spec := importlib.util.spec_from_file_location(path.stem, path):
@@ -17,7 +19,7 @@ def load_test_modules(path):
     if path.is_file():
         if module := load_test_module(path):
             result[path] = module
-    if path.is_dir():
+    if path.is_dir() and path.stem not in IGNORED_DIRECTORIES:
         for path in path.iterdir():
             result |= load_test_modules(path)
     return result

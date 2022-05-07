@@ -1,12 +1,20 @@
 import os
 import sys
+import time
 import colorama
 import importlib
 import contextlib
 from pathlib import Path
 
+TERM_WIDTH = os.get_terminal_size().columns
 COLORS = {"red": colorama.Fore.RED, "green": colorama.Fore.GREEN}
 IGNORED_DIRECTORIES = {"__pycache__"}
+
+
+def print_header(header):
+    left = (TERM_WIDTH - len(header)) // 2 - 1
+    right = TERM_WIDTH - left - len(header) - 2
+    print("=" * left, header, "=" * right)
 
 
 def colored(message, color):
@@ -63,7 +71,7 @@ def main(argv):
         modules |= load_test_modules(target)
     testsets = {name: load_tests(m) for name, m in modules.items()}
     total_tests, current_test = sum(map(len, testsets.values())), 0
-    fails = {}
+    fails, t0 = {}, time.time()
     for module_path, testset in testsets.items():
         for name, test in testset.items():
             current_test += 1
@@ -76,6 +84,14 @@ def main(argv):
             percents = str(round(current_test / total_tests * 100)) + "%"
             color = "red" if fails else "green"
             print(colored(f"\x1b[{term_width-6}G[{percents:>4}]", color))
+    print()
+    print_header("short test summary info")
+    for path, fail in fails.items():
+        print("FAILED", path)
+    failed = len(fails)
+    passed = total_tests - len(fails)
+    dt = time.time() - t0
+    print_header(f"{failed} failed, {passed} passed in {dt:0.2f}s")
 
 
 main(sys.argv)

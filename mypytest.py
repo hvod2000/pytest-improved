@@ -6,6 +6,7 @@ import importlib
 import contextlib
 from pathlib import Path
 
+
 TERM_WIDTH = os.get_terminal_size().columns
 COLORS = {"red": colorama.Fore.RED, "green": colorama.Fore.GREEN}
 IGNORED_DIRECTORIES = {"__pycache__"}
@@ -20,6 +21,10 @@ def print_header(header):
 def colored(message, color):
     color = COLORS.get(color, color)
     return color + message + colorama.Style.RESET_ALL
+
+
+def bolded(message):
+    return "\x1b[1m" + message + "\x1b[0m"
 
 
 def load_test_module(path):
@@ -67,11 +72,15 @@ def print_status(status):
 
 def main(argv):
     modules = {}
+    print("rootdir:", Path(".").resolve())
+    print("collecting ...", end="")
     for target in map(Path, argv[1:] or ["."]):
         modules |= load_test_modules(target)
     testsets = {name: load_tests(m) for name, m in modules.items()}
     total_tests, current_test = sum(map(len, testsets.values())), 0
     fails, t0 = {}, time.time()
+    print(bolded(f"\x1b[1Gcollected {total_tests} items"))
+    print()
     for module_path, testset in testsets.items():
         for name, test in testset.items():
             current_test += 1

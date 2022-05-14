@@ -59,8 +59,11 @@ def run_test(test):
     try:
         test()
         return (True, None)
-    except Exception as e:
-        return (False, e)
+    except Exception:
+        e_type, e, trace = sys.exc_info()
+        path = Path(trace.tb_next.tb_frame.f_code.co_filename)
+        line = trace.tb_next.tb_lineno - 1
+        return (False, (e, path, line))
 
 
 def print_status(status):
@@ -95,8 +98,8 @@ def main(argv):
             print(colored(f"\x1b[{term_width-6}G[{percents:>4}]", color))
     print()
     print_header("short test summary info")
-    for path, error in fails.items():
-        print("FAILED", path, error.__class__.__name__)
+    for path, (e, e_path, e_line) in fails.items():
+        print("FAILED", path, e_path.read_text().split("\n")[e_line].strip())
     failed = len(fails)
     passed = total_tests - len(fails)
     dt = time.time() - t0
